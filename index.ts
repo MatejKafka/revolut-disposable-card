@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import readline from "node:readline/promises";
 import process from "node:process";
+import path from "node:path";
 import Revolut, { type T_Config, type T_ConfigFn } from './lib/RevolutInternalAPI';
 
 const CONFIG_FILE_PATH = "./revolut.json"
@@ -27,7 +28,7 @@ const promptMasked = async (prompt: string) => {
 
 (async () => {
     if (!config.phoneNumber) {
-        console.log("The phone number will be stored at `" + CONFIG_FILE_PATH + "`. PIN is not stored.");
+        console.log("The phone number will be stored at `" + path.resolve(CONFIG_FILE_PATH) + "`. PIN is not stored.");
         config.phoneNumber = (await rl.question("Phone number: ")).replace(" ", "");
         saveConfig(config);
     }
