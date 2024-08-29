@@ -1,4 +1,6 @@
 {
+  "name": "revolut-disposable-card",
+  "version": "0.1.0",
   "type": "module",
 
   "devDependencies": {
