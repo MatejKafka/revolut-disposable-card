@@ -27,7 +27,7 @@ const promptMasked = async (prompt: string) => {
 
 (async () => {
     if (!config.phoneNumber) {
-        console.log("The phone number will be stored at `" + CONFIG_FILE_PATH + "`.");
+        console.log("The phone number will be stored at `" + CONFIG_FILE_PATH + "`. PIN is not stored.");
         config.phoneNumber = (await rl.question("Phone number: ")).replace(" ", "");
         saveConfig(config);
     }
