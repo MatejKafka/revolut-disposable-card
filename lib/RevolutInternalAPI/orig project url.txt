@@ -1,0 +1,4 @@
+original project: https://github.com/ShufflePerson/RevolutInternalAPI
+
+I reworked some parts of the project (e.g. using node:crypto instead of the very dubious aes-ecb
+3rd party package, making the config storage mechanism configurable,...) and reorganized the project.
