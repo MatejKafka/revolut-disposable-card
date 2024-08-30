@@ -49,9 +49,17 @@ const promptMasked = async (prompt: string) => {
         }
     }));
 
+
+    if (!config.tokens) {
+        console.log("")
+        console.log("Please confirm the sign-in in your Revolut mobile app...")
+    }
+
+    // ensure that we're logged in
     await revolut.signin();
 
     if (!config.cardId) {
+        // discover the card ID of a disposable card
         let cards = await revolut.getCards();
         let disposableCards = cards.filter(c => c.disposable).map(c => c.id);
         if (disposableCards.length === 0) {
