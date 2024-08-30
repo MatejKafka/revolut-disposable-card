@@ -25,7 +25,7 @@ export default class Revolut {
     private refreshToken: string;
     private deviceId: string;
 
-    constructor(private phoneNumber: string, private password: string, private configFn: T_ConfigFn, private userAgent: string = DEFAULT_USER_AGENT) {
+    constructor(private phoneNumber: string | null, private password: string, private configFn: T_ConfigFn, private userAgent: string = DEFAULT_USER_AGENT) {
         this.tokenId = '';
         this.credentials = '';
         this.refreshToken = '';
@@ -54,7 +54,7 @@ export default class Revolut {
     private setToken(): Promise<boolean> {
         return new Promise(async (resolve, reject) => {
             let signinPayload: Requests.T_SignIn = {
-                phone: this.phoneNumber,
+                phone: this.phoneNumber!,
                 password: this.password,
                 channel: 'APP',
             };
@@ -78,7 +78,7 @@ export default class Revolut {
         return new Promise(async (resolve) => {
             try {
                 let payload: Requests.T_Token = {
-                    phone: this.phoneNumber,
+                    phone: this.phoneNumber!,
                     password: this.password,
                     tokenId: this.tokenId,
                 };
@@ -220,9 +220,12 @@ export default class Revolut {
             try {
                 let conf = this.configFn();
                 if (conf == null) {
+                    if (this.phoneNumber == null) {
+                        throw new Error("Phone number was not passed, but there is no logged-in session. " +
+                            "Phone number is needed to sign in for the first time.");
+                    }
                     await this.setToken();
-                    let tokenData = await this.waitForPublicToken();
-                    this.tokenData = tokenData;
+                    this.tokenData = await this.waitForPublicToken();
                 } else {
                     this.tokenData = conf.data;
                     this.credentials = conf.credentials;

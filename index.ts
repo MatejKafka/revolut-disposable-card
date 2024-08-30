@@ -7,7 +7,7 @@ import path from "node:path";
 import Revolut, { type T_Config, type T_ConfigFn } from './lib/RevolutInternalAPI';
 
 const CONFIG_FILE_PATH = "./revolut.json"
-let config: { phoneNumber?: string, cardId?: string, tokens?: T_Config } =
+let config: { cardId?: string, tokens?: T_Config } =
     fs.existsSync(CONFIG_FILE_PATH) ? JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, "utf8")) : {};
 let saveConfig = (conf: typeof config) => fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify(conf, null, 4));
 
@@ -27,16 +27,20 @@ const promptMasked = async (prompt: string) => {
 }
 
 (async () => {
-    if (!config.phoneNumber) {
-        console.log("The phone number will be stored at `" + path.resolve(CONFIG_FILE_PATH) + "`. PIN is not stored.");
-        config.phoneNumber = (await rl.question("Phone number: ")).replace(" ", "");
-        saveConfig(config);
+    let phoneNumber: string | null = null;
+    if (!config.tokens) {
+        // no active session, sign in
+        console.log("Authentication tokens will be stored at `" + path.resolve(CONFIG_FILE_PATH) + "`.")
+        console.log("Phone number and PIN are not stored.")
+        console.log("")
+        console.log("No previous session found. Signing in...");
+        phoneNumber = (await rl.question("Phone number: ")).replace(" ", "");
     }
 
     let pin = await promptMasked("PIN: ");
     rl.close();
 
-    let revolut = new Revolut(config.phoneNumber!, pin, <T_ConfigFn>((tokenConf?: T_Config) => {
+    let revolut = new Revolut(phoneNumber, pin, <T_ConfigFn>((tokenConf?: T_Config) => {
         if (tokenConf == null) {
             return config.tokens;
         } else {
