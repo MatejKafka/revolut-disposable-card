@@ -1,11 +1,9 @@
 import Axios, { AxiosError, type AxiosInstance } from 'axios';
 import crypto from "node:crypto";
 
-//Types
-import * as Responses from './T_Responses';
-import type T_Requests from './T_Requests';
-
-import URLs from './URLs';
+import * as Responses from './responses';
+import * as Requests from './requests';
+import URLs from './urls';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36';
 
@@ -27,7 +25,7 @@ export default class Revolut {
     private refreshToken: string;
     private deviceId: string;
 
-    constructor(private phoneNumber: string, private password: string, private config_fn: T_ConfigFn, private userAgent: string = DEFAULT_USER_AGENT) {
+    constructor(private phoneNumber: string, private password: string, private configFn: T_ConfigFn, private userAgent: string = DEFAULT_USER_AGENT) {
         this.tokenId = '';
         this.credentials = '';
         this.refreshToken = '';
@@ -55,7 +53,7 @@ export default class Revolut {
 
     private setToken(): Promise<boolean> {
         return new Promise(async (resolve, reject) => {
-            let signinPayload: T_Requests['SignIn'] = {
+            let signinPayload: Requests.T_SignIn = {
                 phone: this.phoneNumber,
                 password: this.password,
                 channel: 'APP',
@@ -79,7 +77,7 @@ export default class Revolut {
     private getPublicToken(): Promise<Responses.T_Token> {
         return new Promise(async (resolve) => {
             try {
-                let payload: T_Requests['Token'] = {
+                let payload: Requests.T_Token = {
                     phone: this.phoneNumber,
                     password: this.password,
                     tokenId: this.tokenId,
@@ -99,7 +97,7 @@ export default class Revolut {
                     return;
                 }
 
-                this.config_fn({
+                this.configFn({
                     credentials,
                     refreshToken,
                     deviceId: this.deviceId,
@@ -163,8 +161,8 @@ export default class Revolut {
         this.credentials = creds;
         this.refreshToken = refreshToken;
 
-        this.config_fn({
-            ...this.config_fn(),
+        this.configFn({
+            ...this.configFn(),
             credentials: creds,
             refreshToken: refreshToken,
         });
@@ -183,7 +181,7 @@ export default class Revolut {
         }
         return new Promise(async (resolve, reject) => {
             try {
-                let payload: T_Requests['UpdateToken'] = {
+                let payload: Requests.T_UpdateToken = {
                     userId: this.tokenData.user?.id || '',
                     refreshCode: this.tokenData.refreshCode || '',
                 };
@@ -199,8 +197,8 @@ export default class Revolut {
                 this.tokenData.refreshCode = data.refreshCode;
                 this.tokenData.tokenExpiryDate = data.tokenExpiryDate;
 
-                this.config_fn({
-                    ...this.config_fn(),
+                this.configFn({
+                    ...this.configFn(),
                     data: this.tokenData,
                 });
 
@@ -220,7 +218,7 @@ export default class Revolut {
     public signin(): Promise<boolean> {
         return new Promise(async (resolve, reject) => {
             try {
-                let conf = this.config_fn();
+                let conf = this.configFn();
                 if (conf == null) {
                     await this.setToken();
                     let tokenData = await this.waitForPublicToken();
@@ -329,7 +327,7 @@ export default class Revolut {
         return new Promise(async (resolve, reject) => {
             await this.updateToken();
             try {
-                let payload: T_Requests['Issue'] = {
+                let payload: Requests.T_Issue = {
                     label: name,
                     design: 'LIGHT_GREEN_VIRTUAL',
                     disposable: false,
