@@ -1,4 +1,4 @@
-import Axios, { AxiosError, type AxiosInstance } from 'axios';
+import Axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import crypto from "node:crypto";
 
 import * as Responses from './responses';
@@ -25,19 +25,13 @@ export default class Revolut {
     private refreshToken: string;
     private deviceId: string;
 
-    constructor(private phoneNumber: string | null, private password: string, private configFn: T_ConfigFn, private userAgent: string = DEFAULT_USER_AGENT) {
+    constructor(private phoneNumber: string | null, private password: string, private configFn: T_ConfigFn, private userAgent: string = DEFAULT_USER_AGENT, debugNetwork: boolean = false) {
         this.tokenId = '';
         this.credentials = '';
         this.refreshToken = '';
         this.deviceId = crypto.randomUUID();
         this.tokenData = {};
 
-        //Needed to set this.axios first otherwise typescript won't realize that its assigned in the `initAxios` function
-        this.axios = Axios;
-        this.initAxios();
-    }
-
-    private initAxios() {
         this.axios = Axios.create({
             headers: {
                 'X-Browser-Application': 'BROWSER_EXTENSION',
@@ -49,6 +43,18 @@ export default class Revolut {
             },
             withCredentials: true,
         });
+
+        if (debugNetwork) {
+            this.axios.interceptors.request.use((req: InternalAxiosRequestConfig) => {
+                console.log(req.method + " " + req.url + (req.data ? (" " + JSON.stringify(req.data)) : ""));
+                return req;
+            })
+
+            this.axios.interceptors.response.use((res: AxiosResponse) => {
+                console.log(res.status + " " + (res.data ? (" " + JSON.stringify(res.data)) : ""));
+                return res;
+            })
+        }
     }
 
     private async setToken(): Promise<void> {
@@ -63,7 +69,7 @@ export default class Revolut {
             let data: Responses.T_SignIn = res.data;
             this.tokenId = data.tokenId;
         } catch (ex) {
-            if (ex instanceof AxiosError) {
+            if (ex instanceof Axios.AxiosError) {
                 throw ex.response?.data;
             }
         }
@@ -99,7 +105,7 @@ export default class Revolut {
 
             return data;
         } catch (ex) {
-            if (ex instanceof AxiosError) {
+            if (ex instanceof Axios.AxiosError) {
                 return <Responses.T_Token>ex.response?.data;
             }
             throw ex;
