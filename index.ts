@@ -7,8 +7,7 @@ import path from "node:path";
 import Revolut, { type T_Config, type T_ConfigFn } from './lib/RevolutInternalAPI';
 
 const CONFIG_FILE_PATH = "./revolut.json"
-let config: { cardId?: string, tokens?: T_Config } =
-    fs.existsSync(CONFIG_FILE_PATH) ? JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, "utf8")) : {};
+let config: { tokens?: T_Config } = fs.existsSync(CONFIG_FILE_PATH) ? JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, "utf8")) : {};
 let saveConfig = (conf: typeof config) => fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify(conf, null, 4));
 
 const rl = <any>readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -58,19 +57,14 @@ const promptMasked = async (prompt: string) => {
     // ensure that we're logged in
     await revolut.signin();
 
-    if (!config.cardId) {
-        // discover the card ID of a disposable card
-        let cards = await revolut.getCards();
-        let disposableCards = cards.filter(c => c.disposable).map(c => c.id);
-        if (disposableCards.length === 0) {
-            throw new Error("No disposable cards are registered. Create a new disposable card in the Revolut mobile app.");
-        }
-
-        config.cardId = disposableCards[0];
-        saveConfig(config);
+    // find the card ID of a disposable card; since it changes after each use, we must look it up each time
+    let cards = await revolut.getCards();
+    let disposableCardIds = cards.filter(c => c.disposable).map(c => c.id);
+    if (disposableCardIds.length === 0) {
+        throw new Error("No disposable cards are registered. Create a new disposable card in the Revolut mobile app.");
     }
 
-    let details = await revolut.getCardSecrets(config.cardId)
+    let details = await revolut.getCardSecrets(disposableCardIds[0]);
 
     // format card number as "xxxx xxxx xxxx xxxx"
     let panArr = []
