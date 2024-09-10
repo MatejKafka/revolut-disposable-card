@@ -10,10 +10,9 @@ export interface T_Token {
     tokenId: string;
 };
 
-export interface T_Issue {
-    design: 'LIGHT_GREEN_VIRTUAL' | 'LIGHT_BLUE_VIRTUAL';
+export interface T_IssueDisposable {
+    design: 'ORIGINAL_DISPOSABLE';
     disposable: boolean;
-    label: string;
 };
 
 export interface T_UpdateToken {

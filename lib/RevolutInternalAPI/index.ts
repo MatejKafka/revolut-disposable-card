@@ -274,21 +274,18 @@ export default class Revolut {
     }
 
     /**
-     * Creates a new virtual card with the given name.
-     * @todo - Add Support for custom designs
-     * @param {string} name - The label to assign to the new virtual card.
-     * @returns {Promise<T_Responses['Details']>} - A Promise that resolves to the newly created virtual card details.
+     * Creates a new disposable virtual card.
+     * @returns {Promise<T_Responses['Details']>} - A Promise that resolves to the newly created disposable card details.
      * @throws {Error} - If the card details (CVV or PAN) are not found.
      */
-    public async newVirtualCard(name: string): Promise<Responses.T_FullCardDetails> {
+    public async createDisposableCard(): Promise<Responses.T_FullCardDetails> {
         await this.updateToken();
-        let payload: Requests.T_Issue = {
-            label: name,
-            design: 'LIGHT_GREEN_VIRTUAL',
-            disposable: false,
-        };
 
-        let res = await this.axios.post(urls.issue_virtual, payload, this.getAxiosOptions());
+        let res = await this.axios.post(urls.issue_virtual, <Requests.T_IssueDisposable>{
+            design: 'ORIGINAL_DISPOSABLE',
+            disposable: true,
+        }, this.getAxiosOptions());
+
         return res.data;
     }
 }

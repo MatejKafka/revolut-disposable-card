@@ -57,14 +57,15 @@ const promptMasked = async (prompt: string) => {
     // ensure that we're logged in
     await revolut.signin();
 
-    // find the card ID of a disposable card; since it changes after each use, we must look it up each time
+    // find the card ID of a disposable card, or create a new one; Revolut represents each new disposable card separately,
+    //  and after it is used, it disappears; the Revolut extension automatically requests a new card on click
     let cards = await revolut.getCards();
-    let disposableCardIds = cards.filter(c => c.disposable).map(c => c.id);
-    if (disposableCardIds.length === 0) {
-        throw new Error("No disposable cards are registered. Create a new disposable card in the Revolut mobile app.");
+    let disposableCard = cards.find(c => c.disposable);
+    if (disposableCard == null) {
+        disposableCard = await revolut.createDisposableCard();
     }
 
-    let details = await revolut.getCardSecrets(disposableCardIds[0]);
+    let details = await revolut.getCardSecrets(disposableCard.id);
 
     // format card number as "xxxx xxxx xxxx xxxx"
     let panArr = []
