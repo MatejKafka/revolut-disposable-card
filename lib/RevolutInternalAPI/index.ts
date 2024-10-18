@@ -135,14 +135,20 @@ export default class Revolut {
         });
     }
 
-    private getDecryptionKey() {
+    private getDecryptionKey(): Uint8Array {
         let token = Buffer.from(this.credentials, 'base64').toString('utf-8').split(':')[1];
-        return token.slice(0, 32);
+        return (new TextEncoder()).encode(token.slice(0, 32));
     }
 
-    private decrypt(data: string): string {
-        let cipher = crypto.createDecipheriv("aes-256-ecb", this.getDecryptionKey(), null);
-        return Buffer.concat([cipher.update(Buffer.from(data, "base64")), cipher.final()]).toString();
+    private async decrypt(data: string): Promise<string> {
+        let key = await crypto.subtle.importKey("raw", this.getDecryptionKey(), "AES-GCM", false, ["decrypt"]);
+        let buf = Buffer.from(data, "base64");
+        let plaintext = await crypto.subtle.decrypt({
+            name: "AES-GCM",
+            iv: buf.subarray(0, 12),
+            tagLength: 128,
+        }, key, buf.subarray(12));
+        return Buffer.from(plaintext).toString("utf-8");
     }
 
     private getAxiosOptions() {
@@ -168,7 +174,8 @@ export default class Revolut {
             headers: {
                 'X-Api-Authorization': creds,
                 'X-Device-Id': this.deviceId,
-                Cookie: `credentials=${creds};refresh-token=${refreshToken}`,
+                "X-Encryption-Mode": "GCM",
+                "Cookie": `credentials=${creds};refresh-token=${refreshToken}`,
             },
         };
     }
@@ -258,8 +265,8 @@ export default class Revolut {
             throw new Error("Card wasn't found");
         }
 
-        data.cvv = this.decrypt(data.cvv);
-        data.pan = this.decrypt(data.pan);
+        data.cvv = await this.decrypt(data.cvv);
+        data.pan = await this.decrypt(data.pan);
         return data;
     }
 
