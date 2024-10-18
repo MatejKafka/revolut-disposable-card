@@ -1,4 +1,4 @@
-import Axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import Axios, { AxiosError, type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import crypto from "node:crypto";
 
 import * as Responses from './responses';
@@ -46,13 +46,16 @@ export default class Revolut {
 
         if (debugNetwork) {
             this.axios.interceptors.request.use((req: InternalAxiosRequestConfig) => {
-                console.log(req.method + " " + req.url + (req.data ? (" " + JSON.stringify(req.data)) : ""));
+                console.error(req.method + " " + req.url + (req.data ? (" " + JSON.stringify(req.data)) : ""));
                 return req;
             })
 
             this.axios.interceptors.response.use((res: AxiosResponse) => {
-                console.log(res.status + " " + (res.data ? (" " + JSON.stringify(res.data)) : ""));
+                console.error(res.status + (res.data ? (" " + JSON.stringify(res.data)) : ""));
                 return res;
+            }, (err: AxiosError) => {
+                console.error(err.status + (err.response && err.response.data ? (" " + JSON.stringify(err.response.data)) : ""));
+                return Promise.reject(err);
             })
         }
     }

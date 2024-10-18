@@ -10,6 +10,8 @@ const CONFIG_FILE_PATH = "./revolut.json"
 let config: { tokens?: T_Config } = fs.existsSync(CONFIG_FILE_PATH) ? JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, "utf8")) : {};
 let saveConfig = (conf: typeof config) => fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify(conf, null, 4));
 
+let debugLogs = process.argv.length > 2 ? process.argv[2] === "DEBUG" : false
+
 const rl = <any>readline.createInterface({ input: process.stdin, output: process.stdout });
 const promptMasked = async (prompt: string) => {
     const maskFn = () => {
@@ -46,7 +48,7 @@ const promptMasked = async (prompt: string) => {
             config.tokens = tokenConf;
             saveConfig(config);
         }
-    }));
+    }), undefined, debugLogs);
 
 
     if (!config.tokens) {

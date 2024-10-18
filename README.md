@@ -32,3 +32,5 @@ xxx
 ```
 
 Config file containing the Revolut API tokens and a UUID of the first disposable card is stored in `revolut.json` in the current working directory. On the first run, you will be prompted for your phone number and your PIN. On subsequent runs, you only need to enter the PIN.
+
+To debug the program, pass `DEBUG` as an argument (`bun . DEBUG`) and all network requests and responses will be printed to stderr.
