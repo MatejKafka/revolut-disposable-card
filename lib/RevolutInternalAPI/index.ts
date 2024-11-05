@@ -16,6 +16,8 @@ export interface T_Config {
 
 export type T_ConfigFn = (() => T_Config) & ((conf: T_Config) => T_Config | undefined);
 
+export class NeedsReauthenticationError extends Error {}
+
 export default class Revolut {
     private axios: AxiosInstance;
 
@@ -189,7 +191,17 @@ export default class Revolut {
             userId: this.tokenData.user?.id || '',
             refreshCode: this.tokenData.refreshCode || '',
         };
-        let res = await this.axios.put(urls.token, payload, this.getAxiosOptions());
+
+        let res;
+        try {
+            res = await this.axios.put(urls.token, payload, this.getAxiosOptions());
+        } catch(e) {
+            if (e instanceof AxiosError && e.response?.data.code == 9013) {
+                // 422 {"message":"Refresh code is incorrect", "code":9013}
+                throw new NeedsReauthenticationError();
+            }
+            throw e;
+        }
         let data: Responses.T_Token = res.data;
         if (!data.refreshCode || !data.accessToken) {
             throw new Error('Unexpected Response');

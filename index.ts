@@ -4,7 +4,7 @@ import fs from "node:fs";
 import readline from "node:readline/promises";
 import process from "node:process";
 import path from "node:path";
-import Revolut, { type T_Config, type T_ConfigFn } from './lib/RevolutInternalAPI';
+import Revolut, { type T_Config, type T_ConfigFn, NeedsReauthenticationError } from './lib/RevolutInternalAPI';
 
 const CONFIG_FILE_PATH = "./revolut.json"
 let config: { tokens?: T_Config } = fs.existsSync(CONFIG_FILE_PATH) ? JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, "utf8")) : {};
@@ -56,8 +56,18 @@ const promptMasked = async (prompt: string) => {
         console.log("Please confirm the sign-in in your Revolut mobile app...")
     }
 
-    // ensure that we're logged in
-    await revolut.signin();
+    try {
+        // ensure that we're logged in
+        await revolut.signin();
+    } catch (NeedsReauthenticationError) {
+        // reset config
+        config.tokens = undefined;
+        saveConfig(config);
+
+        console.error("Seems like the login session expired. This tends to happen when you did not use the client for ~1 month.")
+        console.error("I haven't found any way to work around it yet. Please re-run the client and re-authenticate.")
+        process.exit(1);
+    }
 
     // find the card ID of a disposable card, or create a new one; Revolut represents each new disposable card separately,
     //  and after it is used, it disappears; the Revolut extension automatically requests a new card on click
