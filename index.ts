@@ -79,14 +79,9 @@ const promptMasked = async (prompt: string) => {
 
     let details = await revolut.getCardSecrets(disposableCard.id);
 
-    // format card number as "xxxx xxxx xxxx xxxx"
-    let panArr = []
-    for (let i = 0; i < 16; i += 4) {
-        panArr.push(details.pan.slice(i, i + 4))
-    }
-
     console.log("")
-    console.log(panArr.join(" "))
+    // looks better with spaces between every 4 digits, but harder to copy from the terminal
+    console.log(details.pan)
     console.log(details.expiry!.month.toString().padStart(2, "0") + "/" + (details.expiry!.year - 2000).toString().padStart(2, "0"))
     console.log(details.cvv)
 })()
